@@ -29,10 +29,17 @@ export async function createInvoice(formData: FormData) {
     // invoice creation date
     const date = new Date().toISOString().split('T')[0];
 
-    await sql `
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+    try {
+        await sql `
+        INSERT INTO invoices (customer_id, amount, status, date)
+        VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+        `;
+    } catch (error) {
+        console.error(error);
+        return {
+            message: 'Database Error: Failed to Create Invoice.'
+        };
+    }
 
     // revalidate to fetch fresh data from the server
     revalidatePath('/dashboard/invoices');
@@ -49,11 +56,18 @@ export async function updateInvoice(id: string, formData: FormData) {
 
     const amountInCents = amount * 100;
 
-    await sql`
-        UPDATE invoices
-        SET customer_id = ${customerId}, amount, = ${amountInCents}, status = ${status}
-        WHERE id = ${id}
-    `;
+    try {
+        await sql`
+            UPDATE invoices
+            SET customer_id = ${customerId}, amount, = ${amountInCents}, status = ${status}
+            WHERE id = ${id}
+        `;
+    } catch (error) {
+        console.error(error);
+        return {
+            message: 'Database Error: Failed to Update Invoice.'
+        };
+    }
 
     // Clear client cache and make a new server request
     revalidatePath('/dashboard/invoices');
@@ -62,9 +76,16 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 
 export async function deleteInvoice(id: string) {
-    await sql `
-        DELETE FROM invoices WHERE id = ${id}
-    `;
+    try {
+        await sql `
+            DELETE FROM invoices WHERE id = ${id}
+        `;
+    } catch (error) {
+        console.error(error);
+        return {
+            message: 'Database Error: Failed to Delete Invoice.'
+        };
+    }
 
     // Trigger a new server request and re-render the table
     revalidatePath('/dashboard/invoices');
